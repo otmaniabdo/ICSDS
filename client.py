@@ -2,11 +2,9 @@ import threading
 from tkinter import *
 import tkinter as tk
 from tkinter import ttk, filedialog
-import split
+import split, crypt
 
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
-
+passwork = 'masterbigdata2018'
 
 def dialogfile():
     global filename
