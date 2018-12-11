@@ -108,18 +108,24 @@ class FileSplitter:
 
     def combine(self, part1, part2):
 
-        chunkfiles = []
-        chunkfiles.append(part1)
-        chunkfiles.append(part2)
 
-        data = ''
         bname = part1.replace('-1','')
-        print (bname)
-        for f in chunkfiles:
+        print ('Join : 'bname)
+        file = open(bname, 'ab')
+        with open(part1, "rb") as myfile, open(part2, "rb") as file2:
+            file.write(myfile.read())
+            file.write(file2.read())
+        file.close()
+        print('join Done')
+
+
+
+
+'''     for f in chunkfiles:
 
             try:
                 print('Appending chunk : ',f)
-                data += open(f, 'rb').read()
+                data += open(f, 'ab').read()
             except (OSError, IOError, EOFError) as e:
                 print (e)
                 continue
@@ -133,5 +139,7 @@ class FileSplitter:
 
         print
         'Wrote file', bname
+'''
 
 
+        
