@@ -106,42 +106,19 @@ class FileSplitter:
             i2 = int(f2[index2:len(f2)])
             return i2 - i1
 
-    def combine(self):
-        """ Combine existing chunks to recreate the file.
-        The chunks must be present in the cwd. The new file
-        will be written to cwd. """
-
-        import re
-
-        print
-        'Creating file', self.__filename
-
-        bname = (os.path.split(self.__filename))[1]
-        bname2 = bname
-
-        # bugfix: if file contains characters like +,.,[]
-        # properly escape them, otherwise re will fail to match.
-        for a, b in zip(['+', '.', '[', ']', '$', '(', ')'],
-                        ['\+', '\.', '\[', '\]', '\$', '\(', '\)']):
-            bname2 = bname2.replace(a, b)
-
-        chunkre = re.compile(bname2 + '-' + '[0-9]+')
+    def combine(self, part1, part2):
 
         chunkfiles = []
-        for f in os.listdir("."):
-            print (f)
-            if chunkre.match(f):
-                chunkfiles.append(f)
-
-        print
-        'Number of chunks', len(chunkfiles), '\n'
-        chunkfiles.sort(self.sort_index)
+        chunkfiles.append(part1)
+        chunkfiles.append(part2)
 
         data = ''
+        bname = part1.replace('-1','')
+        print (bname)
         for f in chunkfiles:
 
             try:
-                print('Appending chunk', os.path.join(".", f))
+                print('Appending chunk : ',f)
                 data += open(f, 'rb').read()
             except (OSError, IOError, EOFError) as e:
                 print (e)

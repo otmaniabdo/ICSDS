@@ -4,8 +4,9 @@ from Crypto.Hash import SHA256
 from Crypto import Random
 
 def encrypt(key, filename):
+	key = SHA256.new(key.encode('utf-8')).digest()
 	chunksize = 64*1024
-	outputFile = filename.replce("temp/","")+".inc"
+	outputFile = filename+".inc"
 	filesize = str(os.path.getsize(filename)).zfill(16)
 	IV = Random.new().read(16)
 
@@ -21,7 +22,28 @@ def encrypt(key, filename):
 
 				if len(chunk) == 0:
 					break
-				elif len(chunk) % 16 != 0
+				elif len(chunk) % 16 != 0:
 					chunk += b' ' * (16 - (len(chunk) % 16))
 
 				outfile.write(encryptor.encrypt(chunk))
+
+def decrypt(key, filename):
+	key = SHA256.new(key.encode('utf-8')).digest()
+	chunksize = 64*1024
+	outputFile = filename.replace('.inc','')
+
+	with open(filename, 'rb') as infile:
+		filesize = int(infile.read(16))
+		IV = infile.read(16)
+
+		decryptor = AES.new(key, AES.MODE_CBC, IV)
+
+		with open(outputFile, 'wb') as outfile:
+			while True:
+				chunk = infile.read(chunksize)
+
+				if len(chunk) == 0:
+					break
+
+				outfile.write(decryptor.decrypt(chunk))
+			outfile.truncate(filesize)

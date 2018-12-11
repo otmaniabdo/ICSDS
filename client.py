@@ -2,9 +2,11 @@ import threading
 from tkinter import *
 import tkinter as tk
 from tkinter import ttk, filedialog
-import split, crypt
+import split
+import crypto
 
-passwork = 'masterbigdata2018'
+password = 'masterbigdata218'
+fsp = split.FileSplitter()
 
 def dialogfile():
     global filename
@@ -23,23 +25,29 @@ def upload():
 def threadsplit():
     threading.Thread(target=splitWork).start()
 
-    print("done spliting")
+def Encrypt():
+	crypto.encrypt(password, filesPart[0])
+	crypto.encrypt(password, filesPart[1])
+
+def Decrypt():
+	crypto.decrypt(password, filesPart[0]+".inc")
+	crypto.decrypt(password, filesPart[1]+".inc")
 
 def splitWork():
     global filename
     global filesPart
+    global fsp
     progressbar.start()
-    fsp = split.FileSplitter()
     fsp.parseOptions(filename,'s')
     filesPart = fsp.do_work()
-    print(filesPart)
     progressbar.stop()
 
+def Combine():
+	fsp.combine(filesPart[0],filesPart[1])
 
 root = Tk()
 root.title("Client")
 root.geometry('440x600')
-
 filesPart = ["",""]
 
 fram_connection = ttk.LabelFrame(root, text="Connection :")
@@ -84,6 +92,10 @@ crypt = tk.IntVar()
 r1 = tk.Radiobutton(frame_crypto, text="AES", padx=40, variable=crypt,value=1).grid(row=0,column=0)
 r2 = tk.Radiobutton(frame_crypto, text="RSA", padx=40, variable=crypt,value=2).grid(row=0,column=1)
 r3 = tk.Radiobutton(frame_crypto, text="GPG", padx=40, variable=crypt,value=3).grid(row=0,column=2)
+
+crypt = tk.Button(frame_crypto, text="Encrypt", command=Encrypt, padx=10).grid(row=1,column=1)
+Decrypt = tk.Button(frame_crypto, text="Decrypt", command=Decrypt, padx=10).grid(row=1,column=2)
+combine = tk.Button(frame_crypto, text="Combine", command=Combine, padx=10).grid(row=1,column=0)
 
 frame_send = ttk.LabelFrame(root, text = "Send :")
 frame_send.pack()
