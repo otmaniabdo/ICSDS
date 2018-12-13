@@ -9,14 +9,6 @@ class FileSplitterException(Exception):
         return str(self.value)
 
 
-def usage():
-    return """\nUsage: FileSplitter.py -i <inputfile> -n <chunksize> [option]\n
-    Options:\n
-    -s, --split  Split file into chunks
-    -j, --join   Join chunks back to file.
-    """
-
-
 class FileSplitter:
     """ File splitter class """
 
@@ -110,7 +102,8 @@ class FileSplitter:
 
 
         bname = part1.replace('-1','')
-        print ('Join : 'bname)
+        bname = bname.replace('temp','client')
+        print ('Join : ', bname)
         file = open(bname, 'ab')
         with open(part1, "rb") as myfile, open(part2, "rb") as file2:
             file.write(myfile.read())

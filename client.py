@@ -1,54 +1,73 @@
-import threading
-from tkinter import *
 import tkinter as tk
+from tkinter import *
 from tkinter import ttk, filedialog
 import split
-import crypto
+import Threads
+import time
+import os
+import glob
 
 password = 'masterbigdata218'
 fsp = split.FileSplitter()
+filesPart = []
+directory = ['temp/','client/']
 
+
+for f in glob.glob("temp/*.*"):
+	os.remove(f)
+
+for d in directory:
+	if not os.path.exists(d):
+	    os.makedirs(d)
+
+
+    	
 def dialogfile():
-    global filename
-    filename = filedialog.askopenfilename(initialdir="/", title="Select file :",
+	global filename
+	filename = filedialog.askopenfilename(initialdir="/", title="Select file :",
                                           filetype=(("jpeg", "*.jpg"), ("All Files", "*.*")))
-    filename_label = ttk.Label(fram_file, text=filename).grid(row=1)
-
-    threadsplit()
-
-
-
+	filename_label = ttk.Label(fram_file, text=filename).grid(row=1)
+	label_message.insert(END,'File Added')
 
 def upload():
-    progressbar.start()
+	global filename
+	global fsp
+	global password
 
-def threadsplit():
-    threading.Thread(target=splitWork).start()
 
-def Encrypt():
-	crypto.encrypt(password, filesPart[0])
-	crypto.encrypt(password, filesPart[1])
+	progressbar.start()
+	label_message.insert(END,'File Splited : '+filename)
+	t0 = Threads.splitThread(fsp, filename)
 
-def Decrypt():
-	crypto.decrypt(password, filesPart[0]+".inc")
-	crypto.decrypt(password, filesPart[1]+".inc")
+	t0.start()
+	time.sleep(2)
 
-def splitWork():
-    global filename
-    global filesPart
-    global fsp
-    progressbar.start()
-    fsp.parseOptions(filename,'s')
-    filesPart = fsp.do_work()
-    progressbar.stop()
+	label_message.insert(END,'Files Encrypting :')
 
-def Combine():
-	fsp.combine(filesPart[0],filesPart[1])
+	label_message.insert(END, '    -->' + t0.filesPart[0])
+	t1 = Threads.encryptThread(password,t0.filesPart[0])
+
+	label_message.insert(END, '    -->' + t0.filesPart[1])
+	t2 = Threads.encryptThread(password,t0.filesPart[1])
+
+	t1.start()
+	t2.start()
+
+	t1.join()
+	t2.join()
+
+	time.sleep(1)
+
+	os.remove(t0.filesPart[0]) 
+	os.remove(t0.filesPart[1])
+
+	progressbar.stop()
+
+
 
 root = Tk()
 root.title("Client")
 root.geometry('440x600')
-filesPart = ["",""]
 
 fram_connection = ttk.LabelFrame(root, text="Connection :")
 fram_connection.pack()
@@ -93,9 +112,6 @@ r1 = tk.Radiobutton(frame_crypto, text="AES", padx=40, variable=crypt,value=1).g
 r2 = tk.Radiobutton(frame_crypto, text="RSA", padx=40, variable=crypt,value=2).grid(row=0,column=1)
 r3 = tk.Radiobutton(frame_crypto, text="GPG", padx=40, variable=crypt,value=3).grid(row=0,column=2)
 
-crypt = tk.Button(frame_crypto, text="Encrypt", command=Encrypt, padx=10).grid(row=1,column=1)
-Decrypt = tk.Button(frame_crypto, text="Decrypt", command=Decrypt, padx=10).grid(row=1,column=2)
-combine = tk.Button(frame_crypto, text="Combine", command=Combine, padx=10).grid(row=1,column=0)
 
 frame_send = ttk.LabelFrame(root, text = "Send :")
 frame_send.pack()
@@ -110,5 +126,12 @@ progressbar.stop()
 espace = tk.Label(frame_send, text="                      ").grid(row=0,column=1)
 send = tk.Button(frame_send, text="Upload", padx=20, command=upload).grid(row=0, column=2)
 
+frame_message = ttk.LabelFrame(root, text = "Log :")
+frame_message.pack(fill=BOTH)
+frame_message.config(padding=5)
+
+label_message = tk.Listbox(frame_message,bg='black',fg='green')
+label_message.pack(fill=BOTH)
+label_message.configure()
 root.mainloop()
 
