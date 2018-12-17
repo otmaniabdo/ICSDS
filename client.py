@@ -6,12 +6,14 @@ import Threads
 import time
 import os
 import glob
+import socket
+import threading
 
 password = 'masterbigdata218'
 fsp = split.FileSplitter()
 filesPart = []
 directory = ['temp/','client/']
-
+connecter = False
 
 for f in glob.glob("temp/*.*"):
 	os.remove(f)
@@ -21,6 +23,8 @@ for d in directory:
 	    os.makedirs(d)
 
 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     	
 def dialogfile():
 	global filename
@@ -28,6 +32,9 @@ def dialogfile():
                                           filetype=(("jpeg", "*.jpg"), ("All Files", "*.*")))
 	filename_label = ttk.Label(fram_file, text=filename).grid(row=1)
 	label_message.insert(END,'File Added')
+
+def uploadThread():
+	threading.Thread(target=upload).start()
 
 def upload():
 	global filename
@@ -56,43 +63,77 @@ def upload():
 	t1.join()
 	t2.join()
 
-	time.sleep(1)
+	time.sleep(5)
 
-	os.remove(t0.filesPart[0]) 
-	os.remove(t0.filesPart[1])
-
+	print (t0.filesPart)
+	filename1 = str.encode('filename**'+t0.filesPart[0].replace('temp/','')+'.inc')
+	filename2 = str.encode('filename**'+t0.filesPart[1].replace('temp/','')+'.inc')
+	print(filename1)
+	if connecter:
+		i = 0
+		for f in t0.filesPart:
+			with open(f+'.inc', 'rb') as fs:
+				if i == 0:
+					s.send(filename1)
+				else:
+					s2.send(filename2)
+				while True:
+					data = fs.read(1024)
+					if(i == 0):
+						s.send(data)
+					else:
+						s2.send(data)
+					if not data:
+						break
+				if i == 0:
+					s.send(b'ENDED')
+				else:
+					s2.send(b'ENDED')
+				fs.close()
+				i = i + 1 
 	progressbar.stop()
 
-
+def connecter():
+	global serverStatu
+	s.connect((adresse.get(),int(port.get())))
+	label_message.insert(END, ' --> connected to server1')
+	s2.connect((a2.get(),int(p2.get())))
+	label_message.insert(END, ' --> connected to server2')
+	connecter = True
 
 root = Tk()
 root.title("Client")
 root.geometry('440x600')
 
+adresse = StringVar()
+port = StringVar()
+
+a2 = StringVar()
+p2 = StringVar()
+
 fram_connection = ttk.LabelFrame(root, text="Connection :")
 fram_connection.pack()
 fram_connection.config(padding=10)
 
-connection = tk.Button(fram_connection, text="Connecter")
+connection = tk.Button(fram_connection, text="Connecter",command=connecter)
 connection.grid(row=4, column=2, pady=10)
 
-server1 = tk.Label(fram_connection, text="SERVER 1 :").grid(row=0, column=0)
-serverStatu = tk.Label(fram_connection, text="en attente...").grid(row=0, column=1, padx=10, pady=10)
+server1 = tk.Label(fram_connection, text="SERVER 1 :")
+server1.grid(row=0, column=0)
 
 labelAdress1 = tk.Label(fram_connection, text="Adresse :").grid(row=1, column=0)
-adresse1 = tk.Entry(fram_connection).grid(row=1, column=1)
+adresse1 = tk.Entry(fram_connection,textvariable=adresse).grid(row=1, column=1)
 
 labelPort1 = tk.Label(fram_connection, text="Prot :").grid(row=1, column=3)
-port1 = tk.Entry(fram_connection).grid(row=1, column=4)
+port1 = tk.Entry(fram_connection,textvariable=port).grid(row=1, column=4)
 
 server2 = tk.Label(fram_connection, text="SERVER 2 :").grid(row=2, column=0)
-serverStatu = tk.Label(fram_connection, text="en attente...").grid(row=2, column=1, padx=10, pady=10)
 
 labelAdress2 = tk.Label(fram_connection, text="Adresse :").grid(row=3, column=0)
-adresse2 = tk.Entry(fram_connection).grid(row=3, column=1)
+adresse2 = tk.Entry(fram_connection, textvariable=a2).grid(row=3, column=1)
 
 labelPort2 = tk.Label(fram_connection, text="Port :").grid(row=3, column=3)
-port2 = tk.Entry(fram_connection).grid(row=3, column=4)
+port2 = tk.Entry(fram_connection, textvariable=p2).grid(row=3, column=4)
 
 fram_file = ttk.LabelFrame(root, text="File :")
 fram_file.pack()
@@ -124,7 +165,7 @@ progressbar.stop()
 
 
 espace = tk.Label(frame_send, text="                      ").grid(row=0,column=1)
-send = tk.Button(frame_send, text="Upload", padx=20, command=upload).grid(row=0, column=2)
+send = tk.Button(frame_send, text="Upload", padx=20, command=uploadThread).grid(row=0, column=2)
 
 frame_message = ttk.LabelFrame(root, text = "Log :")
 frame_message.pack(fill=BOTH)

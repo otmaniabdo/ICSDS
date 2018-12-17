@@ -5,8 +5,8 @@ import socket
 from tkinter import ttk, filedialog
 import threading
 
-if not os.path.exists('server/'):
-	    os.makedirs('server')
+if not os.path.exists('server2/'):
+	    os.makedirs('server2')
 
 def connecterThread():
 	global serverStatu
@@ -26,7 +26,7 @@ def connecterThread():
 			data = client.recv(1024)
 			if first == 0:
 				first = 1
-				filename = 'server/'+data.decode().replace('filename**','')
+				filename = 'server2/'+data.decode().replace('filename**','')
 			else:
 				with open(filename, "wb") as fw:
 					print("Receiving..")
@@ -44,7 +44,7 @@ def connecter():
 
 
 root = Tk()
-root.title("Server 1")
+root.title("Server 2")
 root.geometry('300x400')
 
 port = tk.StringVar()
