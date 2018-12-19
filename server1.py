@@ -24,19 +24,31 @@ def connecterThread():
 		first = 0
 		while True:
 			data = client.recv(1024)
-			if first == 0:
-				first = 1
+			if 'filename**' in data.decode():
 				filename = 'server/'+data.decode().replace('filename**','')
-			else:
 				with open(filename, "wb") as fw:
 					print("Receiving..")
 					while True:
 						data = client.recv(1024)
 						if data == b'ENDED':
 							print("END recv")
+							label_message.insert(END, 'Received : '+filename)
 							break
 						fw.write(data)
-					fw.close()
+					fw.close()					
+			elif 'downloadfile**' in data.decode():
+				filename = 'server/'+data.decode().replace('downloadfile**','')
+				if os.path.exists(filename):
+					with open(filename, 'rb') as fs:
+						while True:
+							data = fs.read(1024)
+							client.send(data)
+							if not data:
+								break
+						client.send(b'ENDED')
+						fs.close()
+				else:
+					label_message.insert(END, 'File not found')
 		client.close()
 
 def connecter():

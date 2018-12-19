@@ -36,6 +36,9 @@ def dialogfile():
 def uploadThread():
 	threading.Thread(target=upload).start()
 
+def downloadThread():
+	threading.Thread(target=download).start()
+
 def upload():
 	global filename
 	global fsp
@@ -74,8 +77,10 @@ def upload():
 		for f in t0.filesPart:
 			with open(f+'.inc', 'rb') as fs:
 				if i == 0:
+					label_message.insert(END, '-> Send File 1')
 					s.send(filename1)
 				else:
+					label_message.insert(END, '-> Send File 2')
 					s2.send(filename2)
 				while True:
 					data = fs.read(1024)
@@ -92,6 +97,43 @@ def upload():
 				fs.close()
 				i = i + 1 
 	progressbar.stop()
+
+
+def download():
+	if connecter:
+		i = 0
+		while(i < 2):
+			if i == 0:
+				filenamedownload = str.encode('downloadfile**'+filedownload.get()+'-1.inc')
+				s.send(filenamedownload)
+				with open('temp/'+filedownload.get()+'-1.inc', "wb") as fw:
+					while True:
+						data = s.recv(1024)
+						if data == b'ENDED':
+							print("END recv")
+							break
+						fw.write(data)
+					fw.close()
+					i = i + 1
+			elif i == 1:
+				filenamedownload = str.encode('downloadfile**'+filedownload.get()+'-2.inc')
+				s2.send(filenamedownload)
+				with open('temp/'+filedownload.get()+'-2.inc', "wb") as fw:
+					while True:
+						data = s2.recv(1024)
+						if data == b'ENDED':
+							print("END recv")
+							break
+						fw.write(data)
+					fw.close()
+					i = i +1
+		t1 = Threads.decryptThread(password,'temp/'+filedownload.get()+'-1.inc')
+		t2 = Threads.decryptThread(password,'temp/'+filedownload.get()+'-2.inc')
+		t1.start()
+		t2.start()
+		time.sleep(2)
+		t3 = Threads.combineThread(fsp,'temp/'+filedownload.get()+'-1','temp/'+filedownload.get()+'-2')
+		t3.start()
 
 def connecter():
 	global serverStatu
@@ -143,15 +185,14 @@ filename = tk.StringVar()
 
 openfile = tk.Button(fram_file, text="Select file", command=dialogfile, padx=10).grid(row=0, padx=160, pady=10)
 
-frame_crypto = ttk.LabelFrame(root, text = "Chiffrement :")
+frame_crypto = ttk.LabelFrame(root, text = "Telechargement :")
 frame_crypto.pack()
 frame_crypto.config(padding=10)
 
-crypt = tk.IntVar()
+filedownload = tk.StringVar()
 
-r1 = tk.Radiobutton(frame_crypto, text="AES", padx=40, variable=crypt,value=1).grid(row=0,column=0)
-r2 = tk.Radiobutton(frame_crypto, text="RSA", padx=40, variable=crypt,value=2).grid(row=0,column=1)
-r3 = tk.Radiobutton(frame_crypto, text="GPG", padx=40, variable=crypt,value=3).grid(row=0,column=2)
+downloadEntry = tk.Entry(frame_crypto,width=50,textvariable=filedownload).grid(row=0,column=0)
+downloadButton = tk.Button(frame_crypto,text='Download',command=downloadThread).grid(row=0,column=1)
 
 
 frame_send = ttk.LabelFrame(root, text = "Send :")
